@@ -1,7 +1,7 @@
 // math
 const pi = Math.PI;
 
-// canvas context
+// globals
 const canvas = document.querySelector('canvas');
 const ctx = canvas.getContext('2d');
 
@@ -14,15 +14,23 @@ const missileMass = 1;
 const missileSize = 4;
 
 // player ship parameters 
-const playerSize = 25
-const cp1 = [0, 0.6]        // Bezier curve control point 1
-const cp2 = [0.28, 0.28]    // Bezier curve control point 2
+const playerSize = 15
+const cp1 = [0, 0.6]            // Bezier curve control point 1
+const cp2 = [0.28, 0.28]        // Bezier curve control point 2
 
 // sun parameters
-const sunX = canvas.width/2
+const sunX = canvas.width/2     
 const sunY = canvas.height/2
 const sunSize = 25;
+const gravConstant = 250;       // gravitational constant for accel
 
+// physics objects
+const phys = [];
+
+/**
+ * Represents an individual component of a Star's sprite.
+ * @class
+ */
 class Trail {
     constructor () {
         this.deltaTheta = pi*((2*Math.random())-1);
@@ -40,8 +48,12 @@ class Trail {
         ctx.closePath();
         this.theta+=this.deltaTheta;
     }
-}
+} // Trail
 
+/**
+ * Represents the star at the center of the <it>Spacewar!</it> system.
+ * @class Star 
+ */
 class Star {
     constructor () {
         this.x = sunX
@@ -62,26 +74,16 @@ class Star {
     }
 
     update () {
-        if (this.trails.length===0) {
+        if (this.trails.length===1) {
             this.createTrail();
-            console.log("Creating first trail")
-        } else if (this.trails.length <= 4 && Math.floor(2*Math.random())===1) {
+        } else if (this.trails.length <= 6 && Math.floor(2*Math.random())===1) {
             this.createTrail()
-            console.log("Creating multiple trails")
         } else {
             this.trails.pop();
-            console.log("Deleting trail");
         }
-        console.log("Sun updated");
         this.draw();
-    }
-}
-
-// physics objects
-const phys = [];
-const theSun = new Star ();
-theSun.update();
-
+    } // update 
+} // Star
 
 class Player {
     constructor (x, y, color, size=25) {
@@ -96,11 +98,16 @@ class Player {
         phys.push(this);
     }
 
-    draw () {
+    
+
+    bezierDraw () {
+        // const cosTheta = Math.cos(theta), sinTheta = Math.sin(Theta);
         let p = new Path2D();
         let x = this.x, y=this.y, size=this.size, color=this.color;
+
+       // ctx.rotate(this.theta);
         // specify port half
-        p.moveTo(this.x, this.y);
+        p.moveTo(x, y);
         p.bezierCurveTo(x+(size*cp1[0]), y+(size*cp1[1]),
                         x+(size*cp2[0]), y+(size*cp2[1]), 
                         x+size,          y+size)
@@ -118,7 +125,8 @@ class Player {
         // fill path
         ctx.fillStyle = color
         ctx.fill(p)
-    }
+       // ctx.rotate(-this.theta);
+    } // draw
 
     fire () {
         if (this.missiles > 0) {
@@ -133,9 +141,15 @@ class Player {
     }
 
     update () {
+        const xDiff = sunX-this.x, yDiff = sunY-this.y,
+              sunDist = Math.sqrt(xDiff*xDiff+yDiff*yDiff),
+              sunTheta = Math.atan2(yDiff, xDiff);
         this.x+=this.v[0]; this.y+=this.v[1];
+        this.v[0]+=(gravConstant/(sunDist*sunDist))*Math.cos(sunTheta);
+        this.v[1]+=(gravConstant/(sunDist*sunDist))*Math.sin(sunTheta);
+        this.draw();
     }
-}
+} // Player
 
 class Missile {
     constructor (x, y, v, theta, color, size=missileSize) {
@@ -150,39 +164,37 @@ class Missile {
     }
 
     draw () {
-        // this.pre = ctx.save();
-        // ctx.translate(this.x, this.y)
-        // ctx.rotate(this.theta)
-        // ctx.moveTo(this.x, this.y);
-        // ctx.lineTo(this.x+this.size, this.y);
-        // ctx.rotate(0-this.theta);
-        // ctx.translate(0, 0)
-        // ctx.stroke();
+        const cosTheta = this.size*Math.cos(this.theta),
+              sinTheta = this.size*Math.sin(this.theta);
+        ctx.beginPath();
+        ctx.moveTo(this.x-cosTheta, this.y-sinTheta);
+        ctx.lineTo(this.x+cosTheta, this.y+sinTheta);
+        ctx.endPath();
+        ctx.stroke();
     }
 
     update () {
-
+        const xDiff = sunX-this.x, yDiff = sunY-this.y,
+              sunDist = Math.sqrt(xDiff*xDiff+yDiff*yDiff),
+              sunTheta = Math.atan2(yDiff, xDiff);
+        this.x+=this.v[0]; this.y+=this.v[1];
+        this.v[0]+=(gravConstant/(sunDist*sunDist))*Math.cos(sunTheta);
+        this.v[1]+=(gravConstant/(sunDist*sunDist))*Math.sin(sunTheta);
+        this.draw();
     }
-}
+} // Missile
 
 
-
-
-const player = new Player(200, 200, 'blue', playerSize)
-player.draw();
-
-const m = new Missile(200, 200, 0, pi/2, 'blue', missileSize);
-m.draw();
-
-const star = new Star();
-star.draw();
-
+const theSun = new Star ();
+const player = new Player(50, 50, 'blue', playerSize)
 
 window.addEventListener('keydown', (k) => {
     if (k.key === 'w') {
         console.log('firing missiles!')
         const m = player.fire();
-        m?.draw()
+        if (m) {
+            phys.push(m)
+        }
     }
 })
 
