@@ -1,0 +1,15 @@
+h1 {
+    text-align:center;
+}
+
+.game-container {
+    margin:auto;
+    height: 80%;
+    width: 80%;
+    border:3px ;
+    border-style:solid;
+}
+
+#gamescape {
+    background-color: black;
+}
