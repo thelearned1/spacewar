@@ -12,7 +12,7 @@ const maxTicksPerFrame = 300;
 ctx.strokeStyle = 'white';
 
 // missile parameters
-const mInitV = 15;
+const mInitV = 5;
 const missileMass = 1;
 const missileSize = 4;
 
@@ -21,12 +21,14 @@ const playerSize = 15
 const cp1 = [0, 0.6]            // Bezier curve control point 1
 const cp2 = [0.28, 0.28]        // Bezier curve control point 2
 const shipThetaOffset = -pi/4;  // offset Bezier curve angle to reflect front of ship
+const rotateSpeed = pi/100;
+const acceleration = 1/tickPerSecond;
 
 // sun parameters
 const sunX = canvas.width/2     
 const sunY = canvas.height/2
 const sunSize = 25;
-const gravConstant = 100;       // gravitational constant for accel
+const gravConstant = 125;       // gravitational constant for accel
 
 // physics objects
 const phys = [];
@@ -147,17 +149,61 @@ class Player {
 
     fire () {
         if (this.missiles > 0) {
-            this.vel-=((missileMass*mInitV)/(--this.mass))  
-            this.missiles--;
-            return new Missile (this.posX+missileSize, this.posY+missileSize,  
-                                [(this.vel)[0]+mInitV*Math.cos(this.theta),
-                                 (this.vel)[1]+mInitV*Math.sin(this.theta)],
-                                this.theta,
-                                this.color, 4)
+            // trig values
+            const cosTheta = Math.cos(this.theta), 
+                  sinTheta = Math.sin(this.theta);
+
+            // calcuate deltas for missile velocity
+            const deltaVX = mInitV*cosTheta,
+                  deltaVY = mInitV*sinTheta;
+
+            // calculate missile initial velocity vector
+            const missileOutwardVelocity = [(this.vel)[0]+deltaVX,
+                                            (this.vel)[1]+deltaVY];
+            this.missiles--; this.mass--;
+
+            try {
+                let m = new Missile(this.posX, 
+                                    this.posY,  
+                                    missileOutwardVelocity,
+                                    this.color, 4);
+
+                // calculate conservation of momentum on the ship
+                (this.vel)[0]-=((missileMass*deltaVX)/(this.mass));
+                (this.vel)[1]-=((missileMass*deltaVY)/(this.mass));
+                return m;
+            } catch (E) {
+                console.error(E);
+                debugger;
+            }
+            //                    
         }
+        return null;
+    } // fire
+
+    rotate (deltaTheta) {
+        this.theta+=deltaTheta;
+    }
+
+    accelerate () {
+        (this.vel)[0]+=Math.cos(this.theta)*acceleration;
+        (this.vel)[1]+=Math.sin(this.theta)*acceleration;
     }
 
     update () {
+
+        if (playerStarboard) {
+            this.rotate(pi/30);
+        }
+
+        if (playerPort) {
+            this.rotate(-pi/30);
+        }
+
+        if (playerAccelerate) {
+            this.accelerate();
+        }
+
         const xDiff = sunX-this.posX, yDiff = sunY-this.posY,
               sunDist = Math.sqrt(xDiff*xDiff+yDiff*yDiff),
               sunTheta = Math.atan2(yDiff, xDiff);
@@ -168,32 +214,35 @@ class Player {
 } // Player
 
 class Missile {
-    constructor (x, y, vel, theta, color, size=missileSize) {
+    constructor (x, y, vel, color, size=missileSize) {
         this.mass = missileMass; 
-        this.x = x+50;
-        this.y = y;
+        this.posX = x;
+        this.posY = y;
         this.vel = vel;
         this.color = color;
         this.size = size;
-        this.theta = theta;
+        // this.theta = theta;
         phys.push(this);
     }
 
     draw () {
-        const cosTheta = this.size*Math.cos(this.theta),
-              sinTheta = this.size*Math.sin(this.theta);
+        const theta = Math.atan2((this.vel)[1], (this.vel)[0]);
+        // const cosTheta = this.size*Math.cos(this.theta),
+        //       sinTheta = this.size*Math.sin(this.theta);
+        const cosTheta = (this.size/2)*Math.cos(theta),
+              sinTheta = (this.size/2)*Math.sin(theta);
         ctx.beginPath();
-        ctx.moveTo(this.x-cosTheta, this.y-sinTheta);
-        ctx.lineTo(this.x+cosTheta, this.y+sinTheta);
+        ctx.moveTo(this.posX-cosTheta, this.posY-sinTheta);
+        ctx.lineTo(this.posX+cosTheta, this.posY+sinTheta);
         ctx.closePath();
         ctx.stroke();
     }
 
     update () {
-        const xDiff = sunX-this.x, yDiff = sunY-this.y,
+        const xDiff = sunX-this.posX, yDiff = sunY-this.posY,
               sunDist = Math.sqrt(xDiff*xDiff+yDiff*yDiff),
               sunTheta = Math.atan2(yDiff, xDiff);
-        this.x+=(this.vel)[0]; this.y+=(this.vel)[1];
+        this.posX+=(this.vel)[0]; this.posY+=(this.vel)[1];
         (this.vel)[0]+=(gravConstant/(sunDist*sunDist))*Math.cos(sunTheta);
         (this.vel)[1]+=(gravConstant/(sunDist*sunDist))*Math.sin(sunTheta);
     }
@@ -202,30 +251,56 @@ class Missile {
 
 const theSun = new Star ();
 const player = new Player(50, 50, 'white', playerSize)
+let playerStarboard = false, playerPort = false, playerAccelerate = false;
 
 window.addEventListener('keydown', (k) => {
-    if (k.key === 'w') {
-        console.log('firing missiles!')
-        const m = player.fire();
-        console.log(m);
-        // if (m) {
-        //     phys.push(m)
-        // }
+    let key = k.key;
+    switch (key) {
+        case ('w'):
+            player.fire();
+            break;
+        case ('a'):
+            playerPort = true;
+            break;
+        case ('s'):
+            playerAccelerate = true;
+            break;
+        case ('d'):
+            playerStarboard = true;
+            break;
+    }
+
+})
+
+window.addEventListener('keyup', (k) => {
+    let key = k.key;
+    switch (key) {
+        case ('a'):
+            playerPort = false;
+            break;
+        case ('s'):
+            playerAccelerate = false;
+            break;
+        case ('d'):
+            playerStarboard = false;
+            break;
     }
 })
 
 let lastFrameTime = performance.now(); 
 let deltaT = 0;
 function mainLoop (timestamp) {
-    console.log("deltaT: "+deltaT.toFixed(2)+
-                " time: "+timestamp.toFixed(2)+
-                " last frame: "+lastFrameTime.toFixed(2));
     deltaT += (timestamp-lastFrameTime)
     lastFrameTime = timestamp;
 
+    let framesPassed = 0; 
     while (deltaT >= tickTime_ms) {
         phys.forEach(x => x.update());
         deltaT -= tickTime_ms;
+        if (++framesPassed > maxTicksPerFrame) {
+            break;
+            
+        }
     }
 
     ctx.clearRect(0, 0, 2*canvas.width, 2*canvas.height);
@@ -233,4 +308,8 @@ function mainLoop (timestamp) {
     requestAnimationFrame(mainLoop);
 } // mainLoop
 
-mainLoop (performance.now());
+function panic () {
+    console.error('More than'+maxTicksPerFrame+' ticks attempted in one frame')
+}
+
+mainLoop (performance.now()); 
