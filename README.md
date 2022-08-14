@@ -10,15 +10,12 @@ site.
 The current repository is intended for publication on my Web site; it contains
 all of the files needed to operate as a standalone Web page.  Thus, the intended
 mechanism for using the software is by accessing it at 
-	
 ```
-	https://www.moschata.net/spacewar.
+https://www.moschata.net/spacewar.
 ```
-
 An in-progress version is available from 
-
 ```
-  https://dev.moschata.net/spacewar.
+https://dev.moschata.net/spacewar.
 ```
 
 To host a version on your own site, you can simply clone this repo and ensure
