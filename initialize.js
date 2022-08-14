@@ -15,19 +15,21 @@ ctx.strokeStyle = 'white';
 const mInitV = 5;
 const missileMass = 1;
 const missileSize = 4;
+const numMissiles = 32;
 
 // player ship parameters 
-const playerSize = 15
+const playerMass = 1000;
+const playerSize = 10
 const cp1 = [0, 0.6]            // Bezier curve control point 1
 const cp2 = [0.28, 0.28]        // Bezier curve control point 2
 const shipThetaOffset = -pi/4;  // offset Bezier curve angle to reflect front of ship
 const rotateSpeed = pi/100;
-const acceleration = 1/tickPerSecond;
+const acceleration = 0.25/tickPerSecond;
 
 // sun parameters
 const sunX = canvas.width/2     
 const sunY = canvas.height/2
-const sunSize = 25;
+const maxTrailRadius = 7;
 const gravConstant = 125;       // gravitational constant for accel
 
 // physics objects
@@ -40,7 +42,7 @@ const phys = [];
 class Trail {
     constructor () {
         this.deltaTheta = pi*((Math.random()/5)-0.1);
-        this.rad = Math.floor(10*Math.random());
+        this.rad = Math.floor(maxTrailRadius*Math.random());
         this.theta = 0;
     }
 
@@ -64,7 +66,6 @@ class Star {
     constructor () {
         this.x = sunX
         this.y = sunY
-        this.size = sunSize
         this.trails = [];
         this.createTrail();
         this.createTrail();
@@ -104,8 +105,8 @@ class Player {
         this.theta = 0;
         this.color = color;
         this.size=size
-        this.missiles=100;
-        this.mass=1100;
+        this.missiles=numMissiles;
+        this.mass=playerMass+numMissiles;
         phys.push(this);
     }
     
