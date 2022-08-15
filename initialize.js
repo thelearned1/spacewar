@@ -7,6 +7,8 @@ const ctx = canvas.getContext('2d');
 const tickPerSecond = 30; 
 const tickTime_ms = 1000 / tickPerSecond;
 const maxTicksPerFrame = 300;
+const phys = [];                // array of all physics objects
+
 
 // colors
 ctx.strokeStyle = 'white';
@@ -33,7 +35,6 @@ const maxTrailRadius = 7;
 const gravConstant = 125;       // gravitational constant for accel
 
 // physics objects
-const phys = [];
 
 /**
  * Represents an individual component of a Star's sprite.
