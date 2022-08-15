@@ -6,10 +6,16 @@ h1 {
     margin:auto;
     height: 80%;
     width: 80%;
-    border:3px ;
+    border:3px;
     border-style:solid;
+    text-align:center;
+}
+
+canvas {
+    display: inline;
 }
 
 #gamescape {
     background-color: black;
+    text-align: center;
 }
