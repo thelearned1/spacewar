@@ -68,8 +68,6 @@ The current version of the software contains the following files:
 
 _Spacewar!_ is in the public domain.  See the **LICENSE** for details.
 
-# WEB SITE
-
 # GIT 
 
 You can download the latest version of this software from Github via the
@@ -80,7 +78,7 @@ git clone https://github.com/thelearned1/spacewar
 
 # BUGS
 
-* When the player ship pulls an Icarus and flies to close to the sun, the
+* When the player ship pulls an Icarus and flies too close to the sun, the
   gravitational force is sufficient to send it very far off the screen.  This
   is not avoidable without either collision detection or a bounded map, neither
   of which presently exist.
