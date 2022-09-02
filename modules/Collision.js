@@ -1,4 +1,3 @@
-
 const pointBuffer = 0.5;
 
 /**
@@ -18,6 +17,7 @@ class Collider {
  */
 class Point extends Collider {
 	constructor (x, y) {
+		super();
 		this.x=x; 
 		this.y=y;
 	}
@@ -28,6 +28,7 @@ class Point extends Collider {
  */
 class Line extends Collider {
 	constructor (x1,y1, x2,y2) {
+		super();
 		this.p1 = new Point(x1,y1);
 		this.p2 = new Point(x2,y2);
 		this.len = euclideanDist(p1, p2);
@@ -39,6 +40,7 @@ class Line extends Collider {
  */
 class Rectangle extends Collider {
 	constructor (x,y,w,h) {
+		super();
 		this.width=w;
 		this.height=h;
 		this.corner = new Point (x,y);
@@ -50,6 +52,7 @@ class Rectangle extends Collider {
  */
 class Circle extends Collider {
 	constructor (cx, cy, r) {
+		super();
 		this.r = r;
 		this.center = new Point(cx,cy);
 	}
@@ -66,25 +69,38 @@ function euclideanDist (p1, p2) {
 	return (Math.sqrt((deltaY*deltaY)+(deltaX*deltaX)));
 } 
 
-/** 
- * 
+/** Determines whether two points are within `distance` of each other.
+ * Can be used for point equality with `distance` set to a small value
+ * (to account for floating point error).
  * @param {Point} p1 
- * @param {Point} p2 
- * @param {Number} distance 
- * @returns 
+ * @param {Point} p2
+ * @param {Number} distance defaults to 0.5
+ * @returns {Boolean} 
  */
 function pointNearPoint (p1, p2, distance=pointBuffer) {
-	return euclideanDist(p1, p2) < distance;
+	return euclideanDist(p1, p2) <= distance;
 }
 
+/**
+ * Determines whether a point lies on a line. 
+ * @param {Point} p 
+ * @param {Line} l 
+ * @returns {Boolean}
+ */
 function pointOnLine (p, l) {
 	let dSum = (euclideanDist(p, l.p1)+euclideanDist(p, l.p2));
 	return dSum < l.len+pointBuffer && 
 				 dSum > l.len-pointBuffer;
 }
 
+/** 
+ * 
+ * @param {*} p 
+ * @param {*} circ 
+ * @returns 
+ */
 function pointInCirc (p, circ) {
-	return Collision.dist(p, circ.center) < circ.r;
+	return euclideanDist(p, circ.center) < circ.r;
 }
 
 function pointInRect (p, rect) {
@@ -107,19 +123,29 @@ function lineInCirc (l, circ) {
 
 }
 
+function circIntersectsCirc(circ1, circ2) {
+  return euclideanDist(circ1.center, circ2.center)<=circ1.r+circ2.r
+} 
+
 function rectIntersectsCirc (rect, circ) {
-	let c = circ.center, corner = rect.corner;
-	let closestX = (c.x < corner.x ? corner.x : corner.x+rect.w);
-	let closestY = (c.y < corner.y ? corner.y : corner.y+rect.h);
-	
+	let center = circ.center; let corner = rect.corner;
+	let closestX = center.x;
+	let closestY = center.y;
+
+	if (center.x < corner.x) closestX=corner.x;
+	else if (center.x > corner.x+rect.width) closestX=corner.x+rect.width;
+
+	if (center.y < corner.y) closestY=corner.y;
+	else if (center.y > corner.y+rect.height) closestY=corner.y+rect.height;
+
 	return euclideanDist(new Point(closestX, closestY), circ.center) <= circ.r;
 } // rectIntersectsCirc
 
 function _getGoodCollisionAlgorithms (collider) {
 	if (collider instanceof Circle) {
-		return [[pointInCirc, 2], [rectIntersectsCirc, 2], lineInCirc];
+		return [[pointNearPoint, 2], [pointInCirc, 2], [rectIntersectsCirc, 2], lineInCirc];
 	} else if (collider instanceof Rectangle) {
-		return [[rectIntersectsCirc, 1], [rectIntersectsRect, 1], [pointInRect, 2]];
+		return [[rectIntersectsRect, 1], [rectIntersectsCirc, 1], [pointInRect, 2]];
 	} else if (collider instanceof Line) {
 		return [[pointOnLine, 2], [lineInCirc, 1]];
 	} else if (collider instanceof Point) {
@@ -128,10 +154,18 @@ function _getGoodCollisionAlgorithms (collider) {
 	return false;
 } // _getGoodCollisionAlgorithms
 
+/**
+ * 
+ * @param {Collider} x 
+ * @param {Collider} y 
+ * @returns 
+ */
 function collides (x, y) {
 	let xColl = _getGoodCollisionAlgorithms(x);
 	let yColl = _getGoodCollisionAlgorithms(y);
 	let coll;
+
+
 	for (let i = 0; i < xColl.length; i++) {
 		for (let j = 0; j < yColl.length; j++) {
 			if (xColl[i][0]===yColl[j][0]) {
@@ -140,7 +174,7 @@ function collides (x, y) {
 			}
 		}
 	}
-	return (xColl[0])(...(xColl[1]===1 ? [x, y] : [y, x]));
+	return (coll[0])(...(coll[1]===1 ? [x, y] : [y, x]));
 } // collides
 
 /**
@@ -167,3 +201,20 @@ class Hitbox {
 		))
 	}
 } // Hitbox
+
+export { Hitbox, Point, Line, Circle, Rectangle, collides, Collider, //}
+				 p1, p2, p3, l1, l2, l3, c1, c2, c3, r1, r2, r3 };
+
+let p1 = new Point(0, 0),
+		p2 = new Point(10, 0),
+		p3 = new Point(10, 10),
+		l1 = new Line(0, 0, 10, 0),
+		l2 = new Line(10, 0, 10, 10),
+		l3 = new Line(0, 0, 10, 10),
+		c1 = new Circle(0, 0, 10),
+		c2 = new Circle(11, 11, 1),
+		c3 = new Circle(11, 11, 10),
+		r1 = new Rectangle(0, 0, 10, 10),
+		r2 = new Rectangle(0, 0, 9, 9),
+		r3 = new Rectangle(10, 10, 10, 10);
+

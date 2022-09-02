@@ -1,3 +1,5 @@
+import * as Collision from './modules/Collision.js';
+
 // math
 const pi = Math.PI;
 
@@ -17,7 +19,7 @@ ctx.strokeStyle = 'white';
 const mInitV = 5;
 const missileMass = 1;
 const missileSize = 4;
-const numMissiles = 32;
+const numMissiles = 36;
 
 // player ship parameters 
 const playerMass = 1000;
@@ -32,7 +34,7 @@ const acceleration = 0.25/tickPerSecond;
 const sunX = canvas.width/2     
 const sunY = canvas.height/2
 const maxTrailRadius = 7;
-const gravConstant = 125;       // gravitational constant for accel
+const gravConstant = 200;       // gravitational constant for accel
 
 // physics objects
 
