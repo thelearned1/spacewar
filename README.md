@@ -33,9 +33,10 @@ schema:
 * `S` rotates the ship to starboard.
 * `D` activates the ship's thrusters.
 
-In later versions of the game, `Esc` is planned to pause the simulation of 
-physics, and `IJKL` will fulfill the functions of `WASD` for a second ship. 
-These are not implemented at the time of writing (August 13, 2022), but that may
+Additionally, `Esc` pauses and unpauses the game. 
+
+It is planned that `IJKL` will fulfill the functions of `WASD` for a second ship. 
+This is not implemented at the time of writing (September 22, 2022), but that may
 become the case before I have a chance to revise this README.
 
 # MANIFEST 
@@ -52,6 +53,14 @@ The current version of the software contains the following files:
 +--+ styles
 |  |
 |  +-- game.css
+|
+|--+ modules
+|  |
+|  +-- Collision.js
+|  |
+|  +-- CollisionTest.js
+|  |
+|  +-- CollisionAlgorithms.js
 |
 +-- .gitignore
 |
