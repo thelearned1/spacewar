@@ -75,10 +75,13 @@ command line:
 ```
 git clone https://github.com/thelearned1/spacewar
 ```
+The software uses the ECMAScript 6 packaging system.  Since this system
+is not compatible with the `file://` protocol, you will need to run a
+simple HTTP server to use this software.
 
 # BUGS
 
 * When the player ship pulls an Icarus and flies too close to the sun, the
   gravitational force is sufficient to send it very far off the screen.  This
-  is not avoidable without either collision detection or a bounded map, neither
-  of which presently exist.
+  is not avoidable without either collision detection or a bounded map. 
+  These features are close, but have not yet been implemented.
